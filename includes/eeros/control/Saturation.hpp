@@ -50,7 +50,7 @@ class Saturation : public Blockio<1,1,T> {
   /**
    * Runs the saturation algorithm, as described above.
    */
-  virtual void run() {
+  virtual void run() override {
     std::lock_guard<std::mutex> lock(mtx);
     T inVal = this->in.getSignal().getValue();
     T outVal = inVal;
@@ -66,7 +66,7 @@ class Saturation : public Blockio<1,1,T> {
    * 
    * @see disable()
    */
-  virtual void enable() {
+  virtual void enable() override {
     enabled = true;
   }
   
@@ -77,7 +77,7 @@ class Saturation : public Blockio<1,1,T> {
    * 
    * @see enable()
    */
-  virtual void disable() {
+  virtual void disable() override {
     enabled = false;
   }
   

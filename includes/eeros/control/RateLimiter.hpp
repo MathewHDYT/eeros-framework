@@ -76,7 +76,7 @@ class RateLimiter : public Blockio<1,1,Tout> {
    * If rate < fallingRate: output(i) = dt * fallingRate + output(i-1)
    * Otherwise: output(i) = input(i)
    */
-  virtual void run(){
+  virtual void run() override {
     std::lock_guard<std::mutex> lock(mtx);
     Tout inVal = this->in.getSignal().getValue();
     double tin = this->in.getSignal().getTimestamp() / 1000000000.0;
@@ -99,7 +99,7 @@ class RateLimiter : public Blockio<1,1,Tout> {
    * 
    * @see disable()
    */
-  virtual void enable() {
+  virtual void enable() override {
     enabled = true;
   }
   
@@ -110,7 +110,7 @@ class RateLimiter : public Blockio<1,1,Tout> {
    * 
    * @see enable()
    */
-  virtual void disable() {
+  virtual void disable() override {
     enabled = false;
   }
   

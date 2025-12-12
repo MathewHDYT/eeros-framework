@@ -104,7 +104,7 @@ class Gain : public Blockio<1,1,Tout> {
    * @see enable()
    * @see disable()
    */
-  virtual void run() {
+  virtual void run() override {
     std::lock_guard<std::mutex> lock(mtx);
 
     if (smoothChange) {
@@ -152,7 +152,7 @@ class Gain : public Blockio<1,1,Tout> {
    * @see run()
    * @see enableSmoothChange(bool)
    */
-  virtual void enable() {
+  virtual void enable() override {
     enabled = true;
   }
 
@@ -167,7 +167,7 @@ class Gain : public Blockio<1,1,Tout> {
    * @see run()
    * @see enableSmoothChange(bool)
    */
-  virtual void disable() {
+  virtual void disable() override {
     enabled = false;
   }
 

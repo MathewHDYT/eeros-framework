@@ -81,7 +81,7 @@ class I: public Blockio<1,1,T> {
    *
    * @see disable()
    */
-  virtual void enable() {
+  virtual void enable() override {
     this->enabled = true;
   }
 
@@ -92,10 +92,10 @@ class I: public Blockio<1,1,T> {
    *
    * @see enable()
    */
-  virtual void disable() {
+  virtual void disable() override {
     this->enabled = false;
   }
-  
+
   /**
    * Set the initial state of the integrator from where the integrator
    * will start integrating when enabled.
