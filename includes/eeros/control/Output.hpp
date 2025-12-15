@@ -3,6 +3,7 @@
 
 #include <eeros/control/Signal.hpp>
 #include <eeros/control/Block.hpp>
+#include <eeros/control/SIUnit.hpp>
 
 namespace eeros {
 namespace control {
@@ -16,7 +17,7 @@ namespace control {
  * @since v0.4
  */
 
-template < typename T = double >
+template < typename T = double, SIUnit Unit = SIUnit::create()   >
 class Output {
  public:
   /**

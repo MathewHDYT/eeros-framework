@@ -3,6 +3,7 @@
 
 #include <eeros/control/NotConnectedFault.hpp>
 #include <eeros/control/Signal.hpp>
+#include <eeros/control/SIUnit.hpp>
 #include <eeros/control/Output.hpp>
 #include <eeros/control/Block.hpp>
 
@@ -17,14 +18,14 @@ namespace control {
  * @since v0.4
  */
 
-template < typename T = double >
+template < typename T = double, SIUnit Unit = SIUnit::create()  >
 class Input {
  public:
   /**
    * Constructs an input instance.
    */
   Input() : connectedOutput(nullptr), owner(nullptr) { }
- 
+
   /**
    * Constructs an input instance.
    *
@@ -38,19 +39,19 @@ class Input {
    * @param output - output of another block
    * @return true, if connection could be made 
    */
-  virtual bool connect(Output<T>& output) {
+  virtual bool connect(Output<T, Unit>& output) {
     if(connectedOutput != nullptr) return false;
     connectedOutput = &output;
     return true;
   }
-            
+       
   /**
    * Connects an existing output of any other block to this input.
    * 
    * @param output - output of another block
    * @return true, if connection could be made 
    */
-  virtual bool connect(Output<T>* output) {
+  virtual bool connect(Output<T, Unit>* output) {
     if(connectedOutput != nullptr) return false;
     connectedOutput = output;
     return true;
@@ -71,7 +72,7 @@ class Input {
   virtual bool isConnected() const {
     return connectedOutput != nullptr;
   }
-            
+        
   /**
    * Returns the signal which is carried by the output to which
    * this input is connected. If the input is not connected an NotConnectedFault
@@ -85,7 +86,7 @@ class Input {
     if (owner != nullptr) name = owner->getName(); else name = "";
       throw NotConnectedFault("Read from an unconnected input in block '" + name + "'");
   }
-            
+         
   /**
    * Every input is owned by a block. Sets the owner of this input.
    * 
@@ -94,9 +95,9 @@ class Input {
   virtual void setOwner(Block* block) {
     owner = block;
   }
-            
+
  protected:
-  Output<T>* connectedOutput;
+  Output<T, Unit>* connectedOutput;
   Block* owner;
  };
 
