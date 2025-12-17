@@ -14,6 +14,7 @@ namespace control {
  * can be connected to this output.
  * 
  * @tparam T - signal type (double - default type)
+ * @tparam Unit - signal unit (dimensionless - default type)
  * @since v0.4
  */
 

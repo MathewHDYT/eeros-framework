@@ -88,6 +88,8 @@ class Blockio : public Block {
    * Get an output of the multiple instances of the block.
    * With additional compile time safety if the passed index is out of scope.
    * 
+   * @note Callable only if the instance has multiple inputs N > 1.
+   * 
    * @tparam I - compile time constant index of the input
    * @return input
    */
@@ -98,6 +100,8 @@ class Blockio : public Block {
 
   /**
    * Get an output of the multiple instances of the block.
+   * 
+   * @note Callable only if the instance has multiple Inputs N > 1 and the SIUnit instances of those Inputs are all dimensionless.
    * 
    * @param index - runtime index of the input
    * @return input
@@ -110,6 +114,8 @@ class Blockio : public Block {
   /**
    * Get the single input of the block.
    * 
+   * @note Callable only if the instance has one input N == 1.
+   * 
    * @return output
    */
   auto& getIn() requires One<N> {
@@ -120,7 +126,9 @@ class Blockio : public Block {
    * Get an output of the multiple instances of the block.
    * With additional compile time safety if the passed index is out of scope.
    * 
-   * @tparam I - compile time constant index of the output
+   * @note Callable only if the instance has multiple Outputs M > 1.
+   * 
+   * @tparam I - compile time constant index of the output.
    * @return output
    */
   template<size_t I>
@@ -130,6 +138,8 @@ class Blockio : public Block {
 
   /**
    * Get an output of the multiple instances of the block.
+   * 
+   * @note Callable only if the instance has multiple Outputs M > 1 and the SIUnit instances of those Outputs are all dimensionless.
    * 
    * @param index - runtime index of the output
    * @return output
@@ -142,6 +152,8 @@ class Blockio : public Block {
   /**
    * Get the single output of the block.
    * 
+   * @note Callable only if the instance has one output, M == 1.
+   * 
    * @return output
    */
   auto& getOut() requires One<M> {
@@ -151,6 +163,9 @@ class Blockio : public Block {
  private:
   std::function<void()> func;
 
+  /**
+   * Initalizes the inputs and outputs by setting the owner to this instance and by additonally clearing the internal signal of outputs.
+   */
   constexpr void initalizeInputsAndOutputs() {
     if constexpr (One<M>) {
       out.setOwner(this);
@@ -173,6 +188,12 @@ class Blockio : public Block {
     }
   }
 
+  /**
+   * @brief Create the type that holds the inputs and instantiate it, by combining the passed template parameters.
+   * 
+   * @tparam Is Template parameter pack of a sequence from 0 - N, used to create the tuple type.
+   * @return inputs
+   */
   template<std::size_t... Is>
   constexpr static decltype(auto) createInputs(std::index_sequence<Is...>) {
     constexpr bool allDimensionLess = std::ranges::all_of(Uin, [](auto e) { return e == SIUnit::create(); });   
@@ -184,6 +205,11 @@ class Blockio : public Block {
     }
   }
 
+  /**
+   * @brief Generate the n inputs requested, handling the different edge cases of a value of 0, 1 or N.
+   * 
+   * @return inputs
+   */
   constexpr static decltype(auto) generateNInputs() {
     if constexpr (One<N>) {
       return Input<Tin, Uin[0U]>{};
@@ -196,17 +222,28 @@ class Blockio : public Block {
     }
   }
 
+  /**
+   * @brief Create the type that holds the outputs and instantiate it, by combining the passed template parameters.
+   * 
+   * @tparam Is Template parameter pack of a sequence from 0 - M, used to create the tuple type.
+   * @return outputs
+   */
   template<std::size_t... Is>
   constexpr static decltype(auto) createOutputs(std::index_sequence<Is...>) {
-    constexpr bool allDimensionLess = std::ranges::all_of(Uin, [](auto e) { return e == SIUnit::create(); });   
+    constexpr bool allDimensionLess = std::ranges::all_of(Uout, [](auto e) { return e == SIUnit::create(); });   
     if constexpr (allDimensionLess) {
-      return std::array<Output<Tin, SIUnit::create()>, N>{};
+      return std::array<Output<Tout, SIUnit::create()>, M>{};
     }
     else {
-      return std::tuple<Output<Tin, Uout[Is]>...>{};
+      return std::tuple<Output<Tout, Uout[Is]>...>{};
     }
   }
 
+  /**
+   * @brief Generate the m outputs requested, handling the different edge cases of a value of 0, 1 or M.
+   * 
+   * @return inputs
+   */
   constexpr static decltype(auto) generateMOutputs() {
     if constexpr (One<M>) {
       return Output<Tout, Uout[0U]>{};

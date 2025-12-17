@@ -15,6 +15,7 @@ namespace control {
  * An input can be connected to an output of another block.
  * 
  * @tparam T - signal type (double - default type)
+ * @tparam Unit - signal unit (dimensionless - default type)
  * @since v0.4
  */
 
@@ -36,6 +37,8 @@ class Input {
   /**
    * Connects an existing output of any other block to this input.
    * 
+   * Will fail compilation if the connected to Output instance has a different unit than the one configured for this Input.
+   * 
    * @param output - output of another block
    * @return true, if connection could be made 
    */
@@ -47,6 +50,8 @@ class Input {
        
   /**
    * Connects an existing output of any other block to this input.
+   * 
+   * Will fail compilation if the connected to Output instance has a different unit than the one configured for this Input.
    * 
    * @param output - output of another block
    * @return true, if connection could be made 
