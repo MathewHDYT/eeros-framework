@@ -5,7 +5,6 @@
 #include <utility>
 
 namespace eeros {
-namespace control {
 
 /**
  * Represents all combined SI base units. Being an integer individually representing the power of that specific base unit.
@@ -17,14 +16,14 @@ namespace control {
  * See non-closure literal class type https://en.cppreference.com/w/cpp/language/template_parameters.html for more information on the requirements on the class.
  */
 struct SIUnit {
-  const int length = 0;
-  const int mass = 0;
-  const int time = 0;
-  const int electric_current = 0;
-  const int thermodynamic_temperature = 0;
-  const int amount_of_substance = 0;
-  const int luminous_intensity = 0;
-  const bool radian = false;
+  int length = 0;
+  int mass = 0;
+  int time = 0;
+  int electric_current = 0;
+  int thermodynamic_temperature = 0;
+  int amount_of_substance = 0;
+  int luminous_intensity = 0;
+  bool radian = false;
 
   /**
    * Defaulted three-way comparsion, handles all comparsion cases in one by simply comparing the base member types. 
@@ -89,6 +88,11 @@ private:
   }
 };
 
-}
+constexpr SIUnit Watt = SIUnit::create<2, 1, -3>(); // https://en.wikipedia.org/wiki/Watt
+constexpr SIUnit Newton = SIUnit::create<1, 1, -2>(); // https://en.wikipedia.org/wiki/Newton_(unit)
+constexpr SIUnit Joule = SIUnit::create<2, 1, -2>(); // https://en.wikipedia.org/wiki/Joule
+constexpr SIUnit Volt = SIUnit::create<2, 1, -3, -1>(); // https://en.wikipedia.org/wiki/Volt
+constexpr SIUnit Radian = SIUnit::create<0,0,0,0,0,0,0,true>(); // https://en.wikipedia.org/wiki/Radian
+
 }
 #endif /* ORG_EEROS_CONTROL_SIUNIT_HPP_ */

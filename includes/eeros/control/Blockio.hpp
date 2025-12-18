@@ -31,7 +31,7 @@ concept Multiple = (N > 1);
  */
 template<SIUnit U>
 struct MakeUnitArray {
-    static constexpr std::array<SIUnit, 1> value = {U};
+  static constexpr std::array<SIUnit, 1> value = {U};
 };
 
 struct Empty {};

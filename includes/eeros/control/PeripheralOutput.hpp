@@ -35,8 +35,9 @@ class PeripheralOutput : public Blockio<1,0,T,T,MakeUnitArray<U>::value> {
   PeripheralOutput(std::string id, bool exclusive = true) : hal(hal::HAL::instance()) {
     systemOutput = dynamic_cast<hal::Output<T>*>(hal.getOutput(id, exclusive));
     if(systemOutput == nullptr) throw Fault("Peripheral output '" + id + "' not found!");
+    if(systemOutput->getUnit() != U) throw Fault("Expected input signal unit type does not match unit type of " + id);
   }
-       
+
   /**
    * Disabling use of copy constructor because the block should never be copied unintentionally.
    */
@@ -58,7 +59,7 @@ class PeripheralOutput : public Blockio<1,0,T,T,MakeUnitArray<U>::value> {
     if (isSafe) throw NaNOutputFault("NaN written to output '" + 
                                      this->getName() + "', set to safe level if safe level is defined");
   }
-        
+  
   /**
    * Getter function for the signal value which the block delivers to its output.
    * 
@@ -68,7 +69,7 @@ class PeripheralOutput : public Blockio<1,0,T,T,MakeUnitArray<U>::value> {
     std::lock_guard<std::mutex> lock(mtx);
     return val;
   }
-       
+
   /**
    * Calls a feature function. This function allows to configure hardware specific features defined
    * in the hardware wrapper library.
@@ -81,7 +82,7 @@ class PeripheralOutput : public Blockio<1,0,T,T,MakeUnitArray<U>::value> {
   void callOutputFeature(std::string featureName, ArgTypesOut... args){
     hal.callOutputFeature(systemOutput, featureName, args...);
   }
-     
+ 
  private:
   hal::HAL& hal;
   hal::Output<T>* systemOutput;

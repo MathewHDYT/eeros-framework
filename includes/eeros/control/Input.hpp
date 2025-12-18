@@ -1,9 +1,9 @@
 #ifndef ORG_EEROS_CONTROL_INPUT_HPP_
 #define ORG_EEROS_CONTROL_INPUT_HPP_
 
+#include <eeros/SIUnit.hpp>
 #include <eeros/control/NotConnectedFault.hpp>
 #include <eeros/control/Signal.hpp>
-#include <eeros/control/SIUnit.hpp>
 #include <eeros/control/Output.hpp>
 #include <eeros/control/Block.hpp>
 

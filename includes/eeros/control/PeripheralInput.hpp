@@ -32,6 +32,7 @@ class PeripheralInput : public Blockio<0,1,T,T,SIUnit::generateNSizeArray<0>(),M
   PeripheralInput(std::string id, bool exclusive = true) : hal(hal::HAL::instance()) {
     systemInput = dynamic_cast<eeros::hal::Input<T>*>(hal.getInput(id, exclusive));
     if(systemInput == nullptr) throw Fault("Peripheral input '" + id + "' not found!");
+    if(systemInput->getUnit() != U) throw Fault("Expected output signal unit type does not match unit type of " + id);
   }
 
   /**
@@ -42,7 +43,7 @@ class PeripheralInput : public Blockio<0,1,T,T,SIUnit::generateNSizeArray<0>(),M
   /**
    * Samples the signal at the input.
    */
-  virtual void run() {
+  void run() override {
     this->out.getSignal().setValue(systemInput->get());
     this->out.getSignal().setTimestamp(systemInput->getTimestamp());
   }
