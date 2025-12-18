@@ -12,13 +12,15 @@ namespace control {
  * A peripheral input block reads a signal from an input. This
  * input must be defined by the hardware configuration file.
  * 
- * @tparam T - input type, must be bool or double (double - default type)
+ * @tparam T - output signal data type, must be bool or double (double - default type)
+ * @tparam U - output signal unit type (dimensionless - default type)
  *
  * @since v0.4
  */
 
-template < typename T = double >
-class PeripheralInput : public Blockio<0,1,T> {
+template < typename T = double, SIUnit U = SIUnit::create() >
+requires std::is_same_v<T, double> || std::is_same_v<T, bool>
+class PeripheralInput : public Blockio<0,1,T,T,SIUnit::generateNSizeArray<0>(),MakeUnitArray<U>::value> {
  public:
   /**
    * Constructs a peripheral input instance with a name defined in the 
@@ -31,7 +33,7 @@ class PeripheralInput : public Blockio<0,1,T> {
     systemInput = dynamic_cast<eeros::hal::Input<T>*>(hal.getInput(id, exclusive));
     if(systemInput == nullptr) throw Fault("Peripheral input '" + id + "' not found!");
   }
-  
+
   /**
    * Disabling use of copy constructor because the block should never be copied unintentionally.
    */
@@ -44,7 +46,7 @@ class PeripheralInput : public Blockio<0,1,T> {
     this->out.getSignal().setValue(systemInput->get());
     this->out.getSignal().setTimestamp(systemInput->getTimestamp());
   }
-  
+
   /**
    * Calls a feature function. This function allows to configure hardware specific features defined
    * in the hardware wrapper library.

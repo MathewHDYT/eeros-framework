@@ -20,6 +20,20 @@ concept One = (N == 1);
 template<uint8_t N>
 concept Multiple = (N > 1);
 
+/**
+ * Helper that generates the requires SIUnit std::array from a single SIUnit.
+ * Can be used for Blockio implementations that only have a single input and output block,
+ * by forwarding their received template SIUnit argument into this helper struct and accessing the created array with ::value.
+ * 
+ * Used by calling MakeUnitArray<U>::value in the template paramter list to Blockio, where U is the sole SIUnit.
+ * 
+ * @tparam U Single unit that should be used to create an std::array containing that element.
+ */
+template<SIUnit U>
+struct MakeUnitArray {
+    static constexpr std::array<SIUnit, 1> value = {U};
+};
+
 struct Empty {};
 
 /**
@@ -44,10 +58,10 @@ struct Empty {};
 * 
  * @tparam N - number of inputs
  * @tparam M - number of outputs
- * @tparam Tin - input type (double - default type)
- * @tparam Tout - output type (double - default type)
- * @tparam Uin - input type (double - default type)
- * @tparam Uout - output type (double - default type)
+ * @tparam Tin - input signal data type (double - default type)
+ * @tparam Tout - output signal data type (double - default type)
+ * @tparam Uin - input signal unit types (dimensionless - default type)
+ * @tparam Uout - output signal unit types (dimensionless - default type)
  * @since v1.2.1
  */
 

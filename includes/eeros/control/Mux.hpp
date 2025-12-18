@@ -14,15 +14,16 @@ namespace control {
  * A multiplexer block is used to bundle multiple inputs into one output vector.
  *
  * @tparam N - number of inputs
- * @tparam T - signal input type (double - default type)
- * @tparam C - signal output type (Matrix<N,1,T> - default type)
+ * @tparam T - input signal data type (double - default type)
+ * @tparam C - output signal data type (Matrix<N,1,T> - default type)
+ * @tparam Uin - input signal unit type (dimensionless - default type)
+ * @tparam Uout - output signal unit type (dimensionless - default type)
  * @since v0.6
  */
 
-template < uint32_t N, typename T = double, typename C = eeros::math::Matrix<N,1,T> >
-class Mux: public Blockio<N,1,T,C> {
+template < uint32_t N, typename T = double, typename C = eeros::math::Matrix<N,1,T>, std::array<SIUnit, N> Uin = SIUnit::generateNSizeArray<N>(), SIUnit Uout = SIUnit::create() >
+class Mux: public Blockio<N,1,T,C,Uin,MakeUnitArray<Uout>::value> {
  public:
-   
   /**
    * Constructs a multiplexer instance.
    */
@@ -32,12 +33,12 @@ class Mux: public Blockio<N,1,T,C> {
    * Disabling use of copy constructor because the block should never be copied unintentionally.
    */
   Mux(const Mux& s) = delete; 
-  
+
   /**
    * Runs the multiplexer.
    *
    */
-  virtual void run() {
+  void run() override {
     C newValue;
     for (uint32_t i = 0; i < N; i++) {
       newValue(i) = this->in[i].getSignal().getValue();

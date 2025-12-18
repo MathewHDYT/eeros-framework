@@ -14,8 +14,8 @@ namespace control {
  * Blocks can have inputs and outputs. This is the input class.
  * An input can be connected to an output of another block.
  * 
- * @tparam T - signal type (double - default type)
- * @tparam Unit - signal unit (dimensionless - default type)
+ * @tparam T - signal data type (double - default type)
+ * @tparam Unit - signal unit type (dimensionless - default type)
  * @since v0.4
  */
 

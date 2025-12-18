@@ -13,8 +13,8 @@ namespace control {
  * An output carries a signal. One or several inputs of other blocks
  * can be connected to this output.
  * 
- * @tparam T - signal type (double - default type)
- * @tparam Unit - signal unit (dimensionless - default type)
+ * @tparam T - signal data type (double - default type)
+ * @tparam Unit - signal unit type (dimensionless - default type)
  * @since v0.4
  */
 

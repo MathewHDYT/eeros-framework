@@ -22,11 +22,13 @@ namespace control {
  * If the current safety level is equal or greater than a preset level,
  * the integrator will be enabled.
  *
- * @tparam T - output type (double - default type)
+ * @tparam T - input and output signal data type (double - default type)
+ * @tparam Uin - input signal unit type (dimensionless - default type)
+ * @tparam Uout - output signal unit type (dimensionless - default type)
  * @since v0.6
  */
-template < typename T = double >
-class I: public Blockio<1,1,T> {
+template < typename T = double, SIUnit Uin = SIUnit::create(), SIUnit Uout = SIUnit::create() >
+class I: public Blockio<1,1,T,T,MakeUnitArray<Uin>::value,MakeUnitArray<Uout>::value> {
  public:
   /**
    * Constructs an integrator instance.\n
@@ -35,7 +37,7 @@ class I: public Blockio<1,1,T> {
     prev.clear(); 
     clearLimits();
   }
- 
+
   /**
    * Disabling use of copy constructor because the block should never be copied unintentionally.
    */
@@ -50,7 +52,7 @@ class I: public Blockio<1,1,T> {
    * @see enable()
    * @see disable()
    */
-  virtual void run() override {
+  void run() override {
     std::lock_guard<std::mutex> lock(mtx);
     if (activeLevel != nullptr)
       enabled =  safetySystem->getCurrentLevel() >= *activeLevel;
@@ -81,7 +83,7 @@ class I: public Blockio<1,1,T> {
    *
    * @see disable()
    */
-  virtual void enable() override {
+  void enable() override {
     this->enabled = true;
   }
 
@@ -92,7 +94,7 @@ class I: public Blockio<1,1,T> {
    *
    * @see enable()
    */
-  virtual void disable() override {
+  void disable() override {
     this->enabled = false;
   }
 
@@ -106,7 +108,7 @@ class I: public Blockio<1,1,T> {
   virtual void setInitCondition(T val) {
     this->prev.setValue(val);
   }
-  
+
   /**
    * Set the upper and lower limit of the integrator.
    *
@@ -152,23 +154,27 @@ class I: public Blockio<1,1,T> {
   safety::SafetySystem *safetySystem;
   safety::SafetyLevel *activeLevel;
   std::mutex mtx{};
-  
+
  private:
   virtual void clearLimits() {
     _clear<T>();
   }
+
   template <typename S> typename std::enable_if<std::is_integral<S>::value>::type _clear() {
     upperLimit = std::numeric_limits<S>::max();
     lowerLimit = std::numeric_limits<S>::lowest();
   }
+
   template <typename S> typename std::enable_if<std::is_floating_point<S>::value>::type _clear() {
     upperLimit = std::numeric_limits<S>::max();
     lowerLimit = std::numeric_limits<S>::lowest();
   }
+
   template <typename S> typename std::enable_if<!std::is_arithmetic<S>::value && std::is_integral<typename S::value_type>::value>::type _clear() {
     upperLimit.fill(std::numeric_limits<typename S::value_type>::max());
     lowerLimit.fill(std::numeric_limits<typename S::value_type>::lowest());
   }
+
   template <typename S> typename std::enable_if<!std::is_arithmetic<S>::value && std::is_floating_point<typename S::value_type>::value>::type _clear() {
     upperLimit.fill(std::numeric_limits<typename S::value_type>::max());
     lowerLimit.fill(std::numeric_limits<typename S::value_type>::lowest());
