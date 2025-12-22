@@ -82,9 +82,10 @@ if(USE_ROS AND USE_ROS2)
 endif()
 
 # # Configure Doxygen documentation target (make doc)
+set(EEROS_DOC_OUTDIR "./doc" CACHE PATH "Output directory for EEROS docs")
 if(DOXYGEN_FOUND)
   configure_file(doc/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-  add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+  add_custom_target(${PROJECT_NAME}_docs ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
