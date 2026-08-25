@@ -39,6 +39,7 @@ set_target_properties(${PROJECT_NAME}_eeros PROPERTIES VERSION ${EEROS_VERSION})
 target_compile_options(${PROJECT_NAME}_eeros PRIVATE -g -Wall)
 target_compile_features(${PROJECT_NAME}_eeros PUBLIC cxx_std_17)
 
+find_package(behaviortree_cpp)
 find_package(Doxygen)
 eeros_find_package(${PROJECT_NAME}_eeros Threads)
 find_file(LIBCURSES "curses.h" ${ADDITIONAL_INCLUDE_DIRS})
@@ -63,6 +64,7 @@ if(BUILD_EXAMLES)
 endif()
 
 target_link_libraries(${PROJECT_NAME}_eeros PUBLIC Threads::Threads ucl PRIVATE rt ${CMAKE_DL_LIBS})
+target_link_libraries(${PROJECT_NAME}_eeros PUBLIC BT::behaviortree_cpp Threads::Threads)
 
 include(cmake/driver_config.cmake)
 

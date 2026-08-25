@@ -2,30 +2,24 @@
 #define ORG_EEROS_SEQUENCER_SEQUENCER_HPP_
 #include <eeros/sequencer/SequencerUI.hpp>
 #include <eeros/logger/Logger.hpp>
-#include <thread>
-#include <vector>
-#include <atomic>
+#include <eeros/sequencer/Common.hpp>
+#include <behaviortree_cpp/bt_factory.h>
 #include <memory>
 
 namespace eeros {
 namespace sequencer {
 
-class Sequence;
 class SequencerUI;
 
 /**
- * The sequencer keeps a list of all \ref Sequence. It allows to abort all running sequences
- * and can wait for all sequences to finish running. Further it is possible to do single stepping
- * of sequences with the aid of a simple user interface.
+ * @brief Singleton owning the running BT::Tree, allows to abort all running sequences and can wait for all sequences to finish running.
  * 
  * @since v1.0
  */
 class Sequencer {
-  friend class BaseSequence;
-  friend class Sequence;
   friend class SequencerUI;
-  
- public:
+
+public:
 
   /**
    * Returns a sequencer instance. When first called it will initially create such an instance.
@@ -33,75 +27,55 @@ class Sequencer {
    * 
    * @return - sequencer instance
    */
-  static Sequencer& instance();
-  
-  /**
-   * Every registered sequence has a unique identifier. This function returns the sequence 
-   * with a given identifier
-   * 
-   * @param id - id of a sequence
-   * @return - sequence with this id
-   */
-  Sequence* getSequenceById(int id);
+  static Sequencer& Instance();
 
   /**
-   * Every registered sequence has a unique name. This function returns the sequence 
-   * with a given name
+   * @brief Registers and initalizes the given main tree defined in the xml text as the BehaviorTree to be executed.
    * 
-   * @param name - id of a sequence
-   * @return - sequence with this name
+   * @param factory BT factory used to intialize the sequence.
+   * @param xml_text XML text that defines the exact sequence to register.
+   * @param main_tree_id Name of the root behavior tree.
    */
-  Sequence* getSequenceByName(std::string name);
+  void Init(BT::BehaviorTreeFactory& factory, const std::string& xml_text,
+            const std::string& main_tree_id = "MainTree");
 
   /**
-   * Returns a vector containing all registered sequences.
+   * @brief Tick the main tree until it reaches success or failure.
+   * Ignores any spawned subtrees that are still running use @ref Wait for that.
    * 
-   * @return - vector with all registered sequences
+   * @return BT::NodeStatus 
    */
-  std::vector<Sequence*> getListOfAllSequences();
-  
-  /**
-   * Clears the list with all sequences
-   */
-  void clearList();
-  
-  /**
-   * Waits for the sequencer to terminate all its running sequences
-   * (either blocking or nonblocking)
-   */
-  void wait();
+  BT::NodeStatus Run();
 
   /**
-   * Aborts all running sequences. Please make sure to wait for these sequences to finish running.
-   * @see void wait()
-   * 
+   * @brief Waits for all spawned subtrees running on another thread to complete.
    */
-  void abort();
-  
-  /**
-   * The sequencer can be put into single stepping mode. This can be useful for
-   * debugging purposes, E.g. upon entering a given sequence. 
-   */
-  void singleStepping();
-  
-  /**
-   * State of the sequencer, set to true upon creation. Aborting the sequencer will 
-   * set this variable to false and will abort all registered sequences.
-   */
-  static std::atomic<bool> running;
+  void Wait();
 
- private:
-  Sequencer();
-  void addSequence(Sequence& seq);
-  void step();
-  void restart();
-  Sequence* mainSequence;
-  std::vector<Sequence*> sequenceList;	// list of all sequences
-  logger::Logger log;	
-  std::atomic<bool> stepping;
-  volatile std::atomic<bool> nextStep;
-  SequencerUI ui;
-  static int sequenceCount;
+  /**
+   * @brief Aborts all currently running sequences.
+   */
+  void Abort();
+
+  /**
+   * @brief Get access to the root blackboard.
+   */
+  BT::Blackboard::Ptr RootBlackboard();
+
+  /**
+   * @brief Explicitly destroys all running sequences
+   */
+  void Shutdown();
+
+private:
+  Sequencer() = default;
+  Sequencer(const Sequencer&)            = delete;
+  Sequencer& operator=(const Sequencer&) = delete;
+
+  std::unique_ptr<BT::Tree> tree_;
+  AbortFlag                 abort_flag_      = std::make_shared<std::atomic<bool>>(false);
+  ThreadRegistryPtr         thread_registry_ = std::make_shared<ThreadRegistry>();
+  SequencerUI ui_;
 };
 
 } // namespace sequencer

@@ -1,70 +1,68 @@
 #include <eeros/logger/StreamLogWriter.hpp>
+#include <eeros/sequencer/RegisterAll.hpp>
+#include <eeros/sequencer/Common.hpp>
 #include <eeros/sequencer/Sequencer.hpp>
-#include <eeros/sequencer/Sequence.hpp>
-#include <eeros/sequencer/Wait.hpp>
-
-#include <chrono>
-#include <signal.h>
+#include <csignal>
 
 using namespace eeros::sequencer;
 using namespace eeros::logger;
 
-int count;
+static const char* xml_text = R"(
+<root BTCPP_format="4">
+  <BehaviorTree ID="MainTree">
+    <SequenceWrapper name="Main Sequence">
+      <ReactiveSequence name="main_body">
+        <AbortGuard/>
+        <ReactiveFallback>
+          <MonitorWrapper monitor_name="timeout">
+            <ClockExceeded state_key="watchdog" threshold_msec="10000"/>
+          </MonitorWrapper>
+          <ExceptionSequence name="exception sequence" work_tree_id="ExceptionAbortTree"
+                              reset_keys="monitor_state"/>
+        </ReactiveFallback>
+        <ReactiveFallback>
+          <MonitorWrapper monitor_name="myMonitor">
+            <CounterExceeded state_key="monitor_state" threshold="2"/>
+          </MonitorWrapper>
+          <ExceptionSequence name="exception sequence" work_tree_id="ExceptionWaitTree"
+                              reset_keys="monitor_state"/>
+        </ReactiveFallback>
+        <Wait name="step A" msec="2000"/>
+        <Counter state_keys="loop_state,monitor_state" target="10"/>
+      </ReactiveSequence>
+    </SequenceWrapper>
+  </BehaviorTree>
 
-class ExceptionSeq : public Sequence {
- public:
-  ExceptionSeq(std::string name, Sequence* caller) : Sequence(name, caller, true), wait("wait", this) { }
-  int action() {
-    count = 0; 
-    wait(0.5); 
-    return 0;
-  }
-  Wait wait;
-};
+  <BehaviorTree ID="ExceptionAbortTree">
+    <Sequence name="exception_body">
+      <Script code="monitor_behavior:=ABORT"/>
+      <Wait name="wait" msec="500"/>
+    </Sequence>
+  </BehaviorTree>
 
-class MyCondition : public Condition {
-  bool validate() {return count > 2;}
-};
-
-class MainSequence : public Sequence {
- public:
-  MainSequence(std::string name, Sequencer& seq) 
-      : Sequence(name, seq), stepA("step A", this), eSeq("exception sequence", this), 
-        m("myMonitor", this, cond, SequenceProp::resume, &eSeq) { 
-    setTimeoutTime(10.0);
-    setTimeoutExceptionSequence(eSeq);
-    setTimeoutBehavior(SequenceProp::abort);
-    addMonitor(&m);
-  }
-    
-  int action() {
-    count = 0;
-    for (int i = 0; i < 10; i++) {
-      stepA(2);
-      count++;
-    }
-    return 0;
-  }
-
-  Wait stepA;
-  ExceptionSeq eSeq;
-  MyCondition cond;
-  Monitor m;
-};
+  <BehaviorTree ID="ExceptionWaitTree">
+    <Wait name="wait" msec="500"/>
+  </BehaviorTree>
+</root>
+)";
 
 void signalHandler(int signum) {
-  Sequencer::instance().abort();
+  Sequencer::Instance().Abort();
 }
 
 int main(int argc, char **argv) {
-  signal(SIGINT, signalHandler);
+  BT::BehaviorTreeFactory factory;
+  RegisterAll(factory);
+
+  Sequencer::Instance().Init(factory, xml_text, "MainTree");
+
+  std::signal(SIGINT, signalHandler);
   Logger::setDefaultStreamLogger(std::cout);
   Logger log = Logger::getLogger();
   log.info() << "Sequencer example started...";
-  
-  auto& sequencer = Sequencer::instance();
-  MainSequence mainSeq("Main Sequence", sequencer);
-  mainSeq();
-  sequencer.wait();
+
+  Sequencer::Instance().Run();
+  Sequencer::Instance().Wait();
   log.info() << "Simple sequencer example finished...";
+  Sequencer::Instance().Shutdown();
 }

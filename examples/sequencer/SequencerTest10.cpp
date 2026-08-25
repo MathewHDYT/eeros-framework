@@ -1,38 +1,43 @@
 #include <eeros/logger/StreamLogWriter.hpp>
+#include <eeros/sequencer/RegisterAll.hpp>
+#include <eeros/sequencer/Common.hpp>
 #include <eeros/sequencer/Sequencer.hpp>
-#include <eeros/sequencer/Sequence.hpp>
-#include <eeros/sequencer/Wait.hpp>
-#include <signal.h>
-#include <unistd.h>
+#include <csignal>
 
 using namespace eeros::sequencer;
 using namespace eeros::logger;
 
-class MainSequence : public Sequence {
- public:
-  MainSequence(std::string name, Sequencer& seq) : Sequence(name, seq), stepA("step A", this) { }
-  int action() {
-    for (int i = 0; i < 5; i++) stepA(1);
-//     while (state == SequenceState::running) stepA(1); // can only be stopped with Ctrl-C
-    return 0;
-  }
-  Wait stepA;
-};
+static const char* xml_text = R"(
+<root BTCPP_format="4">
+  <BehaviorTree ID="MainTree">
+    <SequenceWrapper name="Main Sequence">
+      <ReactiveSequence name="main_body">
+        <AbortGuard/>
+        <Wait name="step A" msec="1000"/>
+        <Counter state_keys="loop_state" target="5"/>
+      </ReactiveSequence>
+    </SequenceWrapper>
+  </BehaviorTree>
+</root>
+)";
 
 void signalHandler(int signum) {
-  Sequencer::instance().abort();
+  Sequencer::Instance().Abort();
 }
 
 int main(int argc, char **argv) {
-  signal(SIGINT, signalHandler);
+  BT::BehaviorTreeFactory factory;
+  RegisterAll(factory);
+
+  Sequencer::Instance().Init(factory, xml_text, "MainTree");
+
+  std::signal(SIGINT, signalHandler);
   Logger::setDefaultStreamLogger(std::cout);
   Logger log = Logger::getLogger('M');
-//   log.show();
   log.info() << "Sequencer example started...";
-  
-  auto& sequencer = Sequencer::instance();
-  MainSequence mainSeq("Main Sequence", sequencer);
-  mainSeq();
-  sequencer.wait();
+
+  Sequencer::Instance().Run();
+  Sequencer::Instance().Wait();
   log.info() << "Simple sequencer example finished...";
+  Sequencer::Instance().Shutdown();
 }

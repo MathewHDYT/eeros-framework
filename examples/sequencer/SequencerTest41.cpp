@@ -1,84 +1,72 @@
 #include <eeros/logger/StreamLogWriter.hpp>
+#include <eeros/sequencer/RegisterAll.hpp>
+#include <eeros/sequencer/PredicateCondition.hpp>
+#include <eeros/sequencer/Common.hpp>
 #include <eeros/sequencer/Sequencer.hpp>
-#include <eeros/sequencer/Sequence.hpp>
-#include <eeros/sequencer/Wait.hpp>
-
-#include <chrono>
-#include <signal.h>
+#include <csignal>
 
 using namespace eeros::sequencer;
 using namespace eeros::logger;
 
-int count;
+static const char* xml_text = R"(
+<root BTCPP_format="4">
+  <BehaviorTree ID="MainTree">
+    <SequenceWrapper name="Main Sequence">
+      <ReactiveSequence name="main_body">
+        <AbortGuard/>
 
-class CounterExceptionSeq : public Sequence {
- public:
-  CounterExceptionSeq(std::string name, Sequence* caller) : Sequence(name, caller, true), wait("wait", this) { }
-  int action() {
-    count = 0; 
-    wait(0.5); 
-    return 0;
-  }
-  Wait wait;
-};
+        <ReactiveFallback>
+          <MonitorWrapper monitor_name="timeout">
+            <ClockExceeded state_key="watchdog" threshold_msec="10000"/>
+          </MonitorWrapper>
+          <ExceptionSequence name="timeout exception sequence"
+                              work_tree_id="ExceptionWaitTree" reset_keys="watchdog"/>
+        </ReactiveFallback>
 
-class TimeoutExceptionSeq : public Sequence {
- public:
-  TimeoutExceptionSeq(std::string name, Sequence* caller) : Sequence(name, caller, true), wait("wait", this) { }
-  int action() {
-    wait(0.5); 
-    caller->resetTimeout();
-    return 0;
-  }
-  Wait wait;
-};
+        <ReactiveFallback>
+          <MonitorWrapper monitor_name="myMonitor">
+            <MyCondition state_key="monitor_state"/>
+          </MonitorWrapper>
+          <ExceptionSequence name="counter exception sequence"
+                              work_tree_id="ExceptionWaitTree" reset_keys="monitor_state"/>
+        </ReactiveFallback>
 
-class MyCondition : public Condition {
-  bool validate() {return count > 2;}
-};
+        <Wait name="step A" msec="2000"/>
+        <Counter state_keys="loop_state,monitor_state" target="10"/>
+      </ReactiveSequence>
+    </SequenceWrapper>
+  </BehaviorTree>
 
-class MainSequence : public Sequence {
- public:
-  MainSequence(std::string name, Sequencer& seq) 
-      : Sequence(name, seq), stepA("step A", this), 
-        eSeq1("counter exception sequence", this), eSeq2("timeout exception sequence", this),
-        m("myMonitor", this, cond, SequenceProp::resume, &eSeq1) { 
-    setTimeoutTime(10.0);
-    setTimeoutExceptionSequence(eSeq2);
-    setTimeoutBehavior(SequenceProp::resume);
-    addMonitor(&m);
-  }
-    
-  int action() {
-    count = 0;
-    for (int i = 0; i < 10; i++) {
-      stepA(2);
-      count++;
-    }
-    return 0;
-  }
-
-  Wait stepA;
-  CounterExceptionSeq eSeq1;
-  TimeoutExceptionSeq eSeq2;
-  MyCondition cond;
-  Monitor m;
-};
+  <BehaviorTree ID="ExceptionWaitTree">
+    <Wait name="wait" msec="500"/>
+  </BehaviorTree>
+</root>
+)";
 
 void signalHandler(int signum) {
-  Sequencer::instance().abort();
+  Sequencer::Instance().Abort();
 }
 
 int main(int argc, char **argv) {
-  signal(SIGINT, signalHandler);
+  BT::BehaviorTreeFactory factory;
+  RegisterAll(factory);
+
+  RegisterPredicateCondition(factory, "MyCondition",
+      [](BT::Blackboard::Ptr bb, const std::string& key)
+      {
+        auto cell = GetWatched<AtomicInt>(bb, key);
+        return cell->value > 2; // return count > 2;
+      });
+
+  Sequencer::Instance().Init(factory, xml_text, "MainTree");
+
+  std::signal(SIGINT, signalHandler);
   Logger::setDefaultStreamLogger(std::cout);
   Logger log = Logger::getLogger();
-//   log.show();
   log.info() << "Sequencer example started...";
-  
-  auto& sequencer = Sequencer::instance();
-  MainSequence mainSeq("Main Sequence", sequencer);
-  mainSeq();
-  sequencer.wait();
+
+  Sequencer::Instance().Run();
+  Sequencer::Instance().Wait();
   log.info() << "Simple sequencer example finished...";
+  Sequencer::Instance().Shutdown();
 }

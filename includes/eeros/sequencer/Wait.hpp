@@ -1,45 +1,28 @@
 #ifndef ORG_EEROS_SEQUENCER_WAIT_HPP_
 #define ORG_EEROS_SEQUENCER_WAIT_HPP_
-
-#include <eeros/sequencer/Step.hpp>
+#include <eeros/sequencer/RestartableAction.hpp>
 
 namespace eeros {
 namespace sequencer {
 
 /**
- * This is a special \ref Step which simply wait for a given time.
- * 
- * @since v1.0
+ * @brief Action implementing waiting for a certain amount of time before returning success and returning running otherwise.
  */
-class Wait : public Step {
+class Wait : public RestartableAction {
 public:
-  /**
-   * Constructs a wait step instance with a name and a reference to
-   * the calling sequence.
-   *
-   * @param name - name of the step
-   * @param caller - calling sequence
-   */
-  Wait(std::string name, BaseSequence* caller) : Step(name, caller) { }
+  Wait(const std::string& name, const BT::NodeConfig& config);
+  static BT::PortsList providedPorts();
 
-  /**
-   * Disabling use of copy constructor because a Step should never be copied unintentionally.
-   */
-  Wait(const Wait& s) = delete; 
+protected:
+  bool checkPreCondition() override;
+  BT::NodeStatus onStartAction() override;
+  BT::NodeStatus onRunningAction() override;
+  void onRestartAction() override;
 
-  /**
-   * Operator for function calls. Sets the waiting time and starts waiting.
-   * 
-   * @param waitingTime - waiting time in sec
-   */
-  int operator() (double waitingTime) {this->waitingTime = waitingTime; return start();}
- 
- private:
-  int action() {time = std::chrono::steady_clock::now(); return 0;}
-  bool checkExitCondition() {return ((std::chrono::duration<double>)(std::chrono::steady_clock::now() - time)).count() > waitingTime;}
-  
-  std::chrono::time_point<std::chrono::steady_clock> time;
-  double waitingTime;
+private:
+  bool              has_deadline_ = false;
+  Clock::time_point deadline_;
+  int               invocation_count_ = 0;
 };
 
 } // namespace sequencer
