@@ -81,17 +81,18 @@ void SequencerUI::run() {
           }
           count -= n;
         }
-        Sequencer& seq = Sequencer::instance();
+        Sequencer& seq = Sequencer::Instance();
         switch (ch) {
           case 's': 
-            seq.singleStepping();
-            seq.step();
+            seq.SingleStepping();
+            seq.Step();
             break;
           case 'c':
-            seq.restart();
+            seq.Abort();
+            seq.Run();
             break;
           case 'b':
-            seq.singleStepping();
+            seq.SingleStepping();
             break;
           default: ;
         }

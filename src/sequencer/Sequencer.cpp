@@ -24,6 +24,16 @@ BT::NodeStatus Sequencer::Run()
   return tree_->tickWhileRunning();
 }
 
+void Sequencer::SingleStepping()
+{
+  tree_->haltTree();
+}
+
+BT::NodeStatus Sequencer::Step()
+{
+  return tree_->tickOnce();
+}
+
 void Sequencer::Wait()
 {
   thread_registry_->WaitForAll();

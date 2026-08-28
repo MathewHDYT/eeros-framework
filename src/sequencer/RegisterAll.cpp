@@ -1,6 +1,5 @@
 #include <eeros/sequencer/RegisterAll.hpp>
 #include <eeros/sequencer/AbortGuard.hpp>
-#include <eeros/sequencer/PreconditionGuard.hpp>
 #include <eeros/sequencer/Wait.hpp>
 #include <eeros/sequencer/SequenceWrapper.hpp>
 #include <eeros/sequencer/ResumableSequence.hpp>

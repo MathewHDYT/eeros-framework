@@ -48,6 +48,18 @@ public:
   BT::NodeStatus Run();
 
   /**
+   * @brief Halts the current tree allows to tick individually using the @ref Step method.
+   */
+  void SingleStepping();
+
+  /**
+   * @brief Tick the main tree once.
+   * 
+   * @return BT::NodeStatus 
+   */
+  BT::NodeStatus Step();
+
+  /**
    * @brief Waits for all spawned subtrees running on another thread to complete.
    */
   void Wait();

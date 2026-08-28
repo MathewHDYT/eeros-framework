@@ -52,15 +52,16 @@ int main(int argc, char **argv) {
   BT::BehaviorTreeFactory factory;
   RegisterAll(factory);
 
-  Sequencer::Instance().Init(factory, xml_text, "MainTree");
-
   std::signal(SIGINT, signalHandler);
   Logger::setDefaultStreamLogger(std::cout);
+
+  auto& sequencer = Sequencer::Instance();
+  sequencer.Init(factory, xml_text, "MainTree");
   Logger log = Logger::getLogger('M');
   log.info() << "Sequencer example started...";
 
-  Sequencer::Instance().Run();
-  Sequencer::Instance().Wait();
+  sequencer.Run();
+  sequencer.Wait();
   log.info() << "Simple sequencer example finished...";
-  Sequencer::Instance().Shutdown();
+  sequencer.Shutdown();
 }
